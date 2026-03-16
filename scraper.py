@@ -305,9 +305,26 @@ def upload_file():
         logging.warning("Unauthorized upload attempt")
         return redirect('/')
 
-    leak_name = escape(request.forms.get('leakName', '').strip())
-    leak_date = escape(request.forms.get('leakDate', '').strip())
     data_type = escape(request.forms.get('dataType', '').strip())
+    leak_name = escape(request.forms.get('leakName', '').strip())
+
+    if data_type == 'api_feed':
+        api_url = request.forms.get('apiUrl', '').strip()
+        if not leak_name or not api_url:
+            logging.warning("Missing API fields in upload request")
+            return "Missing required fields for API Feed", 400
+        
+        # Guardar en base de datos la nueva fuente API
+        db['api_feeds'].update_one(
+            {'name': leak_name},
+            {'$set': {'name': leak_name, 'url': api_url}},
+            upsert=True
+        )
+        logging.info("Saved custom API feed: %s -> %s", leak_name, api_url)
+        return {}
+
+    # Flujo normal para archivos
+    leak_date = escape(request.forms.get('leakDate', '').strip())
     upload = request.files.get('file')
 
     if not upload or not leak_name or not leak_date:
@@ -443,7 +460,11 @@ def hostname_check():
         return dict(hostname='', results=None)
 
     hostname = escape(hostname)
-    results = hostname_checker.check_all(hostname)
+    
+    # Obtener fuentes API personalizadas
+    custom_feeds = list(db['api_feeds'].find({}, {'_id': 0, 'name': 1, 'url': 1}))
+    
+    results = hostname_checker.check_all(hostname, custom_feeds)
     logging.info("Hostname check completed for '%s'", hostname)
     return dict(hostname=hostname, results=results)
 

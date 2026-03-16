@@ -108,23 +108,30 @@
                     <option value="credentials">Credentials (User/Pass)</option>
                     <option value="phone_numbers">Phone Numbers</option>
                     <option value="misc_file">Misc (SQL/CSV/JSON)</option>
+                    <option value="api_feed">API Feed (Website/URL)</option>
                 </select>
                 <div id="messageArea"></div>
             </div>
 
-            <div class="form-group-custom">
+            <div class="form-group-custom" id="fileGroup">
                 <label class="label-custom"><i class="fas fa-file-upload mr-2"></i> Source File</label>
-                <input class="file-input-custom" type="file" name="file" accept=".txt,.sql,.json,.csv" required />
+                <input class="file-input-custom" id="fileInput" type="file" name="file" accept=".txt,.sql,.json,.csv" required />
+            </div>
+
+            <div class="form-group-custom" id="apiGroup" style="display: none;">
+                <label class="label-custom"><i class="fas fa-link mr-2"></i> API URL Base</label>
+                <input class="upload-input" id="apiInput" type="text" name="apiUrl" placeholder="e.g. https://www.abuseipdb.com/check/" />
+                <small class="d-block mt-2" style="color: #888; font-size: 0.8rem;">El hostname a comprobar se anadira automaticamente al final de la URL.</small>
             </div>
 
             <div class="row">
                 <div class="col-md-8 form-group-custom">
-                    <label class="label-custom"><i class="fas fa-tag mr-2"></i> Leak Name</label>
-                    <input class="upload-input" type="text" name="leakName" placeholder="e.g. LinkedIn 2024 Breach" required />
+                    <label class="label-custom"><i class="fas fa-tag mr-2"></i> Leak/Feed Name</label>
+                    <input class="upload-input" type="text" name="leakName" placeholder="e.g. LinkedIn 2024 or AbuseIPDB" required />
                 </div>
-                <div class="col-md-4 form-group-custom">
+                <div class="col-md-4 form-group-custom" id="dateGroup">
                     <label class="label-custom"><i class="fas fa-calendar-alt mr-2"></i> Year</label>
-                    <input class="upload-input" type="text" name="leakDate" placeholder="YYYY" required />
+                    <input class="upload-input" id="dateInput" type="text" name="leakDate" placeholder="YYYY" required />
                 </div>
             </div>
 
@@ -139,7 +146,34 @@
     function showMessage() {
         var dataType = document.getElementById('dataType').value;
         var messageArea = document.getElementById('messageArea');
+        var fileGroup = document.getElementById('fileGroup');
+        var apiGroup = document.getElementById('apiGroup');
+        var dateGroup = document.getElementById('dateGroup');
+        
+        var fileInput = document.getElementById('fileInput');
+        var apiInput = document.getElementById('apiInput');
+        var dateInput = document.getElementById('dateInput');
+
         messageArea.innerHTML = '';
+        
+        if (dataType === 'api_feed') {
+            fileGroup.style.display = 'none';
+            dateGroup.style.display = 'none';
+            apiGroup.style.display = 'block';
+            
+            fileInput.required = false;
+            dateInput.required = false;
+            apiInput.required = true;
+        } else {
+            fileGroup.style.display = 'block';
+            dateGroup.style.display = 'block';
+            apiGroup.style.display = 'none';
+            
+            fileInput.required = true;
+            dateInput.required = true;
+            apiInput.required = false;
+        }
+
         switch (dataType) {
             case 'credentials':
                 messageArea.innerHTML = 'Format: email:password OR url:user:password';
@@ -149,6 +183,9 @@
                 break;
             case 'misc_file':
                 messageArea.innerHTML = 'Format: Raw SQL, CSV, or JSON structure';
+                break;
+            case 'api_feed':
+                messageArea.innerHTML = 'Guarda una nueva fuente externa para Hostname Checker';
                 break;
             default:
                 messageArea.innerHTML = '';

@@ -342,6 +342,8 @@
                 🔬
                 % elif res['service'] == 'AbuseIPDB':
                 ⚡
+                % else:
+                🌐
                 % end
                 {{ res['service'] }}
             </span>

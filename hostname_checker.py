@@ -337,11 +337,32 @@ def check_abuseipdb(hostname: str) -> dict:
     }
 
 
+def check_custom(hostname: str, feed: dict) -> dict:
+    """Returns a link to a custom user-defined API feed."""
+    feed_name = feed.get("name", "Custom Feed")
+    feed_url = feed.get("url", "")
+    
+    if feed_url and not feed_url.endswith('/') and not feed_url.endswith('='):
+        feed_url += '/'
+        
+    full_url = f"{feed_url}{hostname}"
+    
+    return {
+        "service": feed_name,
+        "hostname": hostname,
+        "url": full_url,
+        "status": "link_only",
+        "data": {
+            "message": f"Haz clic en el enlace para consultar {feed_name}.",
+        },
+    }
+
+
 # ---------------------------------------------------------------------------
 # Combined check
 # ---------------------------------------------------------------------------
 
-def check_all(hostname: str) -> list[dict]:
+def check_all(hostname: str, custom_feeds: list[dict] = None) -> list[dict]:
     """Run all hostname reputation checks and return a list of results."""
     hostname = hostname.strip().lower()
     # Remove protocol if present
@@ -353,4 +374,9 @@ def check_all(hostname: str) -> list[dict]:
     results.append(check_otx(hostname))
     results.append(check_quttera(hostname))
     results.append(check_abuseipdb(hostname))
+    
+    if custom_feeds:
+        for feed in custom_feeds:
+            results.append(check_custom(hostname, feed))
+            
     return results
