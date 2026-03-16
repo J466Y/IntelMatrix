@@ -2,14 +2,9 @@
 [![Python 3.5|3.6](https://img.shields.io/badge/python-3.x-green.svg)](https://www.python.org/) 
 [![License](https://img.shields.io/badge/license-GPLv3-red.svg)](https://raw.githubusercontent.com/almandin/fuxploider/master/LICENSE.md)
 
-Leaky is an arsenal of tools designed for parsing and visualizing colossal text files laden with credentials and stealer logs (in the ULP format). Built to aid penetration testers and redteamers in OSINT, credential gathering, and credential stuffing attacks, this suite delivers an efficient way to manage and investigate leaked data at scale.
-
-## ⚠️ Disclaimer  
-This project is intended for **educational and professional use only**. It is designed for **penetration testers**, **red team / blue team members**, and **cybersecurity professionals** working in legal and authorized contexts (OSINT, security assessments, leak analysis, etc.).  
-**No illegal or unethical activity is encouraged, promoted, or supported** by the authors of this project. Use responsibly and within the bounds of applicable laws.
-
 ## :star2: Credits
-This project is built upon the foundational work of [ACCEIS' LeakScraper](https://github.com/Acceis/leakScraper).
+This project is built upon the foundational work of [ACCEIS' LeakScraper](https://github.com/Acceis/leakScraper) and the leak module of [vil's H4X-Tools leak search module](https://github.com/vil/H4X-Tools).
+And is a fork of the project [saladandonionrings' Leaky](https://github.com/saladandonionrings/leaky)
 
 ## Installation
 
@@ -33,9 +28,10 @@ sudo systemctl daemon-reload
 sudo systemctl status mongod
 
 # install project
-git clone https://github.com/saladandonionrings/leaky.git
-cd leaky
-sudo ./install.sh
+git clone https://github.com/J466Y/IntelMatrix.git
+cd IntelMatrix
+chmod +x ./install.sh
+./install.sh
 ```
 
 ### Usage
@@ -50,6 +46,7 @@ sudo ./install.sh
 
 ### Importing data
 
+(UI Recommended)
 ```bash
 # change creds for users in init.py
 python3 init.py 
@@ -61,12 +58,13 @@ python3 import.py -t {creds,phone,misc} -f <file> -n <leak_name> -d <leak_date>
 python3 scraper.py
 ```
 ### Functionalities
-Leaky provides the following capabilities:
+IntelMatrix provides the following capabilities:
 
 * **Search** : As it says.
 * **Inventory** : Inventory of your breach files.
-* **Upload** : Add your own breach files.
+* **Upload** : Add your own breach files and API providers.
 * **Links** : Useful links for data leaks.
+* **Check Hostname** : Check suspicious Hostnames
 
 #### Search
 ##### Credentials/ULP
@@ -78,6 +76,10 @@ Leaky provides the following capabilities:
 ##### Misc
 ![csv](https://github.com/user-attachments/assets/d6a921ee-8409-4bb1-9a41-03209500aa50)
 
+##### Leak Search
+
+![leaksearch](google.es)
+
 #### Inventory
 ![list](https://github.com/user-attachments/assets/cf8612b3-6215-49c9-8f0d-19c56f1b2c27)
 
@@ -86,3 +88,6 @@ Leaky provides the following capabilities:
 
 #### Links
 ![links](https://github.com/user-attachments/assets/0ffc22c2-70b6-47d3-890a-bbd694106579)
+
+#### Hostname Checker
+![hostname](google.es)
