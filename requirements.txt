@@ -1,0 +1,5 @@
+pymongo
+bottle
+passlib
+requests
+beautifulsoup4
