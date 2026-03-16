@@ -55,7 +55,40 @@ echo %tab%[+] Dependencias instaladas correctamente.
 echo.
 
 :: -----------------------------------------------------------
-:: 4. Check MongoDB
+:: 4. Check & Download Mongosh
+:: -----------------------------------------------------------
+echo [*] Comprobando Mongosh local...
+if not exist "Mongosh\mongosh.exe" (
+    echo [-] No se encontro Mongosh\mongosh.exe localmente.
+    echo [*] Descargando MongoDB Shell (v2.7.0)...
+    
+    if not exist "Mongosh" mkdir Mongosh
+    
+    powershell -Command "Invoke-WebRequest -Uri 'https://downloads.mongodb.com/compass/mongosh-2.7.0-win32-x64.zip' -OutFile 'Mongosh\mongosh.zip'"
+    if %errorlevel% neq 0 (
+        echo [!] ERROR: Fallo al descargar mongosh.zip. Necesitas conexion a internet.
+        pause
+        exit /b 1
+    )
+    
+    echo [*] Extrayendo mongosh...
+    powershell -Command "Expand-Archive -Path 'Mongosh\mongosh.zip' -DestinationPath 'Mongosh\temp_extract' -Force"
+    
+    :: Mover archivo
+    move /Y "Mongosh\temp_extract\mongosh-2.7.0-win32-x64\bin\mongosh.exe" "Mongosh\mongosh.exe" >nul
+    
+    :: Limpieza
+    rmdir /S /Q "Mongosh\temp_extract"
+    del /Q "Mongosh\mongosh.zip"
+    
+    echo %tab%[+] Mongosh.exe descargado y extraido en la carpeta Mongosh.
+) else (
+    echo %tab%[+] Mongosh local detectado.
+)
+echo.
+
+:: -----------------------------------------------------------
+:: 5. Check MongoDB
 :: -----------------------------------------------------------
 echo [*] Comprobando MongoDB...
 Mongosh\mongosh.exe --eval "db.adminCommand('ping')" --quiet >nul 2>&1
@@ -78,7 +111,7 @@ echo %tab%[+] MongoDB esta activo.
 echo.
 
 :: -----------------------------------------------------------
-:: 5. Configure MongoDB indexes and collections
+:: 6. Configure MongoDB indexes and collections
 :: -----------------------------------------------------------
 set MONGO_URI=mongodb://127.0.0.1:27017/DBleaks
 
@@ -102,7 +135,7 @@ echo.
 :skip_mongo
 
 :: -----------------------------------------------------------
-:: 6. Create initial admin user
+:: 7. Create initial admin user
 :: -----------------------------------------------------------
 echo [*] Creando usuario administrador...
 python init.py
@@ -114,7 +147,7 @@ if %errorlevel% neq 0 (
 echo.
 
 :: -----------------------------------------------------------
-:: 7. Create uploads directory
+:: 8. Create uploads directory
 :: -----------------------------------------------------------
 if not exist "uploads" (
     mkdir uploads

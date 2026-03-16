@@ -70,7 +70,7 @@ def do_login():
         logging.warning("Failed login attempt")
         return template('login', failed=True)
 
-    response.set_cookie("authenticated", "true", secret=secret_key, httponly=True, secure=True)
+    response.set_cookie("authenticated", "true", secret=secret_key, httponly=True)
     logging.info("User logged in successfully")
     return redirect('/leaksearch')
 
@@ -484,4 +484,4 @@ def enable_protection():
     response.headers['X-Powered-By'] = 'Leaky'
 
 if __name__ == "__main__":
-    app.run(host="127.0.0.1", port=9999)
+    app.run(host="0.0.0.0", port=9999)
