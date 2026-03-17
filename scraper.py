@@ -13,8 +13,11 @@ import logging
 import threading
 from dataclasses import asdict
 from pymongo.collection import ASCENDING
-from bottle import Bottle, request, response, redirect, view, static_file, template
+from bottle import Bottle, request, response, redirect, view, static_file, template, BaseRequest
 from html import escape
+
+# Increase memory limit for large file uploads (1GB)
+BaseRequest.MEMFILE_MAX = 1024 * 1024 * 1024
 
 from Utils import leak_search
 import hostname_checker
@@ -90,6 +93,7 @@ def index():
 
     query = escape(request.query.get('search', '').strip())
     name_query = escape(request.query.get('p', '').strip())
+    pw_query = escape(request.query.get('pw', '').strip())
     url_query = escape(request.query.get('url', '').strip())
     leak_name = escape(request.query.get('leakname', '').strip())
     page_number = request.query.get('page', '1')
@@ -106,6 +110,8 @@ def index():
         query_conditions["$text"] = {"$search": query}
     if name_query:
         query_conditions["p"] = {"$regex": re.escape(name_query), "$options": "i"}
+    if pw_query:
+        query_conditions["P"] = {"$regex": re.escape(pw_query), "$options": "i"}
     if url_query:
         query_conditions["url"] = {"$regex": re.escape(url_query), "$options": "i"}
     if leak_name:
@@ -129,6 +135,7 @@ def index():
         query={
             "search": query,
             "p": name_query,
+            "pw": pw_query,
             "url": url_query,
             "leakname": leak_name
         },
@@ -227,8 +234,9 @@ def export():
     else:
         domain_query = request.query.d
         name_query = request.query.p
+        pw_query = request.query.pw
         url_query = request.query.url 
-        if domain_query or name_query or url_query:
+        if domain_query or name_query or pw_query or url_query:
             client = MongoClient()
             db = client[mongo_database]
             credentials = db["credentials"]
@@ -237,6 +245,8 @@ def export():
                 query_conditions["d"] = {"$regex": re.escape(domain_query)}
             if name_query:
                 query_conditions["p"] = {"$regex": re.escape(name_query)}
+            if pw_query:
+                query_conditions["P"] = {"$regex": re.escape(pw_query)}
             if url_query:
                 query_conditions["url"] = {"$regex": re.escape(url_query)}
 
@@ -279,24 +289,26 @@ def upload_form():
     else:
         return {}
 
-def run_leak_importer(cmd):
-    proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    log_filename = "leak_import.log"
-    upload_folder = "uploads"
-    log_path = os.path.join(upload_folder, log_filename)
-    with open(log_path, "w") as log_file:
-        while proc.poll() is None:
-            stdout = proc.stdout.readline()
-            stderr = proc.stderr.readline()
-            log_file.write(stdout.decode())
-            log_file.write(stderr.decode())
-    stdout, stderr = proc.communicate()
-    stdout = stdout.decode()
-    stderr = stderr.decode()
-    with open(log_path, "a") as log_file:
-        log_file.write(stdout)
-        log_file.write(stderr)
-    os.remove(log_path)
+# Global to track import progress
+import_status = {}
+
+@app.route('/upload/status', method='GET')
+def get_upload_status():
+    if not is_authenticated():
+        return {"error": "Unauthorized"}, 401
+    return import_status
+
+def run_leak_importer(cmd, leak_name):
+    import_status[leak_name] = "In progress..."
+    try:
+        proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        stdout, stderr = proc.communicate()
+        if proc.returncode == 0:
+            import_status[leak_name] = "Completed successfully"
+        else:
+            import_status[leak_name] = f"Error: {stderr.decode()}"
+    except Exception as e:
+        import_status[leak_name] = f"Exception: {str(e)}"
 
 @app.route('/upload', method='POST')
 @view('views/upload.tpl')
@@ -340,6 +352,8 @@ def upload_file():
     python_cmd = "python" if sys.platform == "win32" else "python3"
     if data_type == "credentials":
         cmd = [python_cmd, "import.py", "-f", filepath, "-d", leak_date, "-n", leak_name, "-t", "creds"]
+    elif data_type == "passwords":
+        cmd = [python_cmd, "import.py", "-f", filepath, "-d", leak_date, "-n", leak_name, "-t", "password"]
     elif data_type == "phone_numbers":
         cmd = [python_cmd, "import.py", "-f", filepath, "-d", leak_date, "-n", leak_name, "-t", "phone"]
     elif data_type == "misc_file":
@@ -348,9 +362,9 @@ def upload_file():
         logging.warning("Unsupported data type: %s", data_type)
         return "Unsupported data type", 400
     
-    threading.Thread(target=run_leak_importer, args=(cmd,)).start()
+    threading.Thread(target=run_leak_importer, args=(cmd, leak_name)).start()
     logging.info("Started leak import process for %s", leak_name)
-    return {}
+    return {"status": "started", "leakName": leak_name}
 
 @app.route('/links-directory', method='GET')
 @view('views/links.tpl')

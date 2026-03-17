@@ -106,6 +106,7 @@
                 <label class="label-custom"><i class="fas fa-layer-group mr-2"></i> Data Category</label>
                 <select name="dataType" id="dataType" class="form-select" required>
                     <option value="credentials">Credentials (User/Pass)</option>
+                    <option value="passwords">Passwords Only (Wordlist)</option>
                     <option value="phone_numbers">Phone Numbers</option>
                     <option value="misc_file">Misc (SQL/CSV/JSON)</option>
                     <option value="api_feed">API Feed (Website/URL)</option>
@@ -135,11 +136,18 @@
                 </div>
             </div>
 
-            <button type="submit" class="btn-upload">
+            <button type="submit" class="btn-upload" id="submitBtn">
                 <i class="fas fa-cloud-upload-alt mr-2"></i> Start Import Process
             </button>
         </form>
     </div>
+</div>
+
+<!-- Progress Overlay -->
+<div id="progressOverlay" class="spinner-overlay">
+    <div class="spinner"></div>
+    <div class="spinner-text" id="statusText">Uploading file...</div>
+    <div style="margin-top: 20px; font-size: 0.8rem; color: #555;" id="debugStatus">Preparing...</div>
 </div>
 
 <script>
@@ -176,7 +184,10 @@
 
         switch (dataType) {
             case 'credentials':
-                messageArea.innerHTML = 'Format: email:password OR url:user:password';
+                messageArea.innerHTML = 'Format: password OR email:password OR url:user:password';
+                break;
+            case 'passwords':
+                messageArea.innerHTML = 'Format: One password per line (Wordlist mode)';
                 break;
             case 'phone_numbers':
                 messageArea.innerHTML = 'Format: One phone number per line';
@@ -194,6 +205,63 @@
     }
     document.getElementById('dataType').addEventListener('change', showMessage);
     showMessage();
+
+    // Handling form with AJAX for better UX and preventing timeout
+    document.querySelector('form').onsubmit = async function(e) {
+        e.preventDefault();
+        
+        const formData = new FormData(this);
+        const overlay = document.getElementById('progressOverlay');
+        const statusText = document.getElementById('statusText');
+        const debugStatus = document.getElementById('debugStatus');
+        
+        overlay.classList.add('active');
+        statusText.innerText = "Uploading file to server...";
+        
+        try {
+            const response = await fetch('/upload', {
+                method: 'POST',
+                body: formData
+            });
+            
+            if (!response.ok) throw new Error("Upload failed");
+            
+            const result = await response.json();
+            const leakName = result.leakName;
+            
+            if (result.status === "started") {
+                statusText.innerText = "Processing large file...";
+                
+                // Polling for status
+                const poll = setInterval(async () => {
+                    const statusResp = await fetch('/upload/status');
+                    const statuses = await statusResp.json();
+                    const currentStatus = statuses[leakName];
+                    
+                    if (currentStatus) {
+                        debugStatus.innerText = "Status: " + currentStatus;
+                        if (currentStatus === "Completed successfully") {
+                            clearInterval(poll);
+                            statusText.innerText = "Import Finished!";
+                            setTimeout(() => { overlay.classList.remove('active'); location.reload(); }, 2000);
+                        } else if (currentStatus.startsWith("Error") || currentStatus.startsWith("Exception")) {
+                            clearInterval(poll);
+                            statusText.innerText = "Error during import";
+                            statusText.style.color = "#ff4d4d";
+                            setTimeout(() => overlay.classList.remove('active'), 5000);
+                        }
+                    }
+                }, 2000);
+            } else {
+                overlay.classList.remove('active');
+                alert("Settings saved.");
+            }
+            
+        } catch (err) {
+            alert("Error: " + err.message);
+            overlay.classList.remove('active');
+        }
+    };
 </script>
 
 % include("footer")

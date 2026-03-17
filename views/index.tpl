@@ -178,7 +178,7 @@
             <button id="toggleAudit" class="action-control-btn">
                 <i class="fas fa-eye-slash"></i> Audit Mode
             </button>
-            <a href="/export?p={{ query.get('p', '') }}&url={{ query.get('url', '') }}" class="action-control-btn export-variant">
+            <a href="/export?p={{ query.get('p', '') }}&pw={{ query.get('pw', '') }}&url={{ query.get('url', '') }}" class="action-control-btn export-variant">
                 <i class="fas fa-file-csv"></i> Export CSV
             </a>
         </div>
@@ -186,11 +186,15 @@
 
     <div class="search-card">
         <form id="searchForm" method="GET" action="/index" class="row align-items-end">
-            <div class="col-md-5 mb-3 mb-md-0">
+            <div class="col-md-4 mb-3 mb-md-0">
                 <label for="pInput" class="small text-uppercase tracking-wider text-gray-500 mb-2 d-block">Username / Email</label>
                 <input id="pInput" type="text" name="p" value="{{ query.get('p', '') }}" placeholder="john.doe@mail.org" class="search" />
             </div>
-            <div class="col-md-5 mb-3 mb-md-0">
+            <div class="col-md-3 mb-3 mb-md-0">
+                <label for="pwInput" class="small text-uppercase tracking-wider text-gray-500 mb-2 d-block">Password</label>
+                <input id="pwInput" type="text" name="pw" value="{{ query.get('pw', '') }}" placeholder="password123" class="search" />
+            </div>
+            <div class="col-md-3 mb-3 mb-md-0">
                 <label for="urlInput" class="small text-uppercase tracking-wider text-gray-500 mb-2 d-block">Target URL</label>
                 <input id="urlInput" type="text" name="url" value="{{ query.get('url', '') }}" placeholder="https://example.com" class="search" />
             </div>
@@ -200,7 +204,7 @@
         </form>
     </div>
 
-    % if query and (query.get("search") or query.get("d") or query.get("p") or query.get("url") or query.get("leakname")):
+    % if query and (query.get("search") or query.get("d") or query.get("p") or query.get("pw") or query.get("url") or query.get("leakname")):
     <div class="mt-5">
         % if total_filtered_results > 0:
             <div class="mb-4">
@@ -242,9 +246,9 @@
             </div>
 
             <nav class="pages">
-                <a href="?page={{prevPage}}&p={{query.get('p', '')}}&url={{query.get('url', '')}}" class="prev-page {{'disabled' if page <= 1 else ''}}">← Prev</a>
+                <a href="?page={{prevPage}}&p={{query.get('p', '')}}&pw={{query.get('pw', '')}}&url={{query.get('url', '')}}" class="prev-page {{'disabled' if page <= 1 else ''}}">← Prev</a>
                 <span class="small text-gray-500">Page <b>{{page}}</b> of {{total}}</span>
-                <a href="?page={{nextPage}}&p={{query.get('p', '')}}&url={{query.get('url', '')}}" class="next-page {{'disabled' if page >= total else ''}}">Next →</a>
+                <a href="?page={{nextPage}}&p={{query.get('p', '')}}&pw={{query.get('pw', '')}}&url={{query.get('url', '')}}" class="next-page {{'disabled' if page >= total else ''}}">Next →</a>
             </nav>
         % else:
             <div class="text-center py-5">

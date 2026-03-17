@@ -48,6 +48,10 @@ def parse_line(line):
     if match:
         return "", match.group(1), match.group(2)
     
+    # Check for Password only
+    if ":" not in line:
+        return "", "", line
+    
     return None
 
 def remove_duplicates(file_path):
@@ -99,10 +103,10 @@ def import_credentials(file_path, leak_date, leak_name=None):
 
             url, login, password = result
 
-            # Ensure login and password exist and are properly structured
-            if not login or not password or login.strip() == "" or password.strip() == "":
+            # Ensure password exists (login and URL can be empty for password wordlists)
+            if not password or password.strip() == "":
                 skipped_count += 1
-                print(f"    ❌ Skipping invalid line (missing login/password): {line}")
+                print(f"    ❌ Skipping invalid line (missing password): {line}")
                 continue
 
             # Ensure the extracted URL is valid or empty
@@ -124,6 +128,44 @@ def import_credentials(file_path, leak_date, leak_name=None):
 
 
     print(f"✅ Imported {imported_count} credentials. ({skipped_count} lines skipped)")
+
+
+def import_passwords(file_path, leak_date, leak_name=None):
+    client = MongoClient()
+    db = client[mongo_database]
+    credentials = db["credentials"]
+    leaks = db["leaks"]
+
+    remove_duplicates(file_path)
+
+    imported_count = 0
+
+    leak_entry = leaks.find_one({"name": leak_name})
+    if not leak_entry:
+        leak_id = leaks.count_documents({}) + 1
+        leaks.insert_one({"name": leak_name, "date": leak_date, "id": leak_id})
+    else:
+        leak_id = leak_entry["id"]
+
+    with open(file_path, "r", encoding='utf-8') as file:
+        print("📥 Importing Passwords...")
+        for line in file:
+            password = line.strip()
+            if not password:
+                continue
+
+            credential = {
+                "l": leak_id,
+                "url": "",
+                "p": "",
+                "P": password,
+                "leakname": leak_name,
+                "date": leak_date,
+            }
+            credentials.insert_one(credential)
+            imported_count += 1
+
+    print(f"✅ Imported {imported_count} passwords.")
 
 
 def import_phone_numbers(file_path, leak_date, leak_name=None):
@@ -187,7 +229,7 @@ def main():
     parser.add_argument("-f", "--file", required=True, help="Path to the file containing leaks")
     parser.add_argument("-d", "--date", required=True, help="Date of the leak")
     parser.add_argument("-n", "--name", help="Optional leak name")
-    parser.add_argument("-t", "--type", required=True, choices=["creds", "phone", "misc"], help="Type of data to import")
+    parser.add_argument("-t", "--type", required=True, choices=["creds", "phone", "misc", "password"], help="Type of data to import")
 
     args = parser.parse_args()
 
@@ -197,6 +239,8 @@ def main():
 
     if args.type == "creds":
         import_credentials(args.file, args.date, args.name)
+    elif args.type == "password":
+        import_passwords(args.file, args.date, args.name)
     elif args.type == "phone":
         import_phone_numbers(args.file, args.date, args.name)
     elif args.type == "misc":
