@@ -311,7 +311,6 @@ def run_leak_importer(cmd, leak_name):
         import_status[leak_name] = f"Exception: {str(e)}"
 
 @app.route('/upload', method='POST')
-@view('views/upload.tpl')
 def upload_file():
     if not is_authenticated():
         logging.warning("Unauthorized upload attempt")
@@ -333,7 +332,7 @@ def upload_file():
             upsert=True
         )
         logging.info("Saved custom API feed: %s -> %s", leak_name, api_url)
-        return {}
+        return {"status": "success", "message": "API Feed saved"}
 
     # Flujo normal para archivos
     leak_date = escape(request.forms.get('leakDate', '').strip())

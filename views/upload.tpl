@@ -91,6 +91,46 @@
         font-weight: 700;
         letter-spacing: -1px;
     }
+
+    /* Spinner & Overlay */
+    .spinner-overlay {
+        display: none;
+        position: fixed;
+        top: 0; left: 0; right: 0; bottom: 0;
+        background: rgba(5, 5, 5, 0.9);
+        z-index: 9999;
+        justify-content: center;
+        align-items: center;
+        flex-direction: column;
+        backdrop-filter: blur(10px);
+    }
+    .spinner-overlay.active { display: flex; }
+    
+    .spinner {
+        width: 60px; height: 60px;
+        border: 4px solid rgba(255, 255, 255, 0.1);
+        border-top-color: #7F0000;
+        border-radius: 50%;
+        animation: spin 1s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+        box-shadow: 0 0 30px rgba(127, 0, 0, 0.3);
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    
+    .spinner-text { 
+        color: #fff; 
+        margin-top: 20px; 
+        font-size: 1.1rem; 
+        font-weight: 600;
+        letter-spacing: 0.5px;
+    }
+    
+    #debugStatus {
+        font-family: 'JetBrains Mono', monospace;
+        background: rgba(255, 255, 255, 0.05);
+        padding: 5px 15px;
+        border-radius: 6px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
 </style>
 
 <div class="container-fluid py-5">
